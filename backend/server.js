@@ -2,23 +2,37 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const cors = require('cors');
-const { Pool } = require('pg'); // Import the pg library
+const { Pool } = require('pg'); // Import pg library
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-// 1. CONNECTION POOL: Connects to your live database
+// 1. DATABASE CONFIGURATION
+// This explicitly uses the separated environment variables to avoid credential parsing errors.
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false // Required for Render's free tier
-    }
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT || 5432,
+    
+    // Forces SSL requirement since we are using the External hostname over public internet
+    ssl: { rejectUnauthorized: false }, 
+    
+    // Prevent ECONNRESET by killing stale idle connections quickly
+    idleTimeoutMillis: 1000, 
+    connectionTimeoutMillis: 5000,
+});
+
+// Catch errors on the client pool so it doesn't crash your server
+pool.on('error', (err) => {
+    console.error('❌ Unexpected error on idle client', err);
 });
 
 const JWT_SECRET = process.env.JWT_SECRET || "fallback_secret";
 
-// --- AUTH MIDDLEWARE ---
+// 2. AUTH MIDDLEWARE
 const authorize = (roles = []) => {
     return (req, res, next) => {
         const token = req.headers['authorization'];
@@ -37,25 +51,35 @@ const authorize = (roles = []) => {
     };
 };
 
-// --- ROUTES ---
+// 3. API ROUTES
 
-// 1. Register (Now saves to DB)
+// Public: Browse Products
+app.get('/api/products', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM products');
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Auth: Register (Saves to DB)
 app.post('/api/register', async (req, res) => {
     const { name, email, password, role } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
 
     try {
         const result = await pool.query(
-            'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING *',
+            'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role',
             [name, email, hashedPassword, role || 'customer']
         );
-        res.json({ message: "User registered!", user: result.rows[0] });
+        res.json({ message: "User registered successfully!", user: result.rows[0] });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// 2. Login (Checks DB)
+// Auth: Login
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     
@@ -74,17 +98,7 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// 3. Get Products (Live Data)
-app.get('/api/products', async (req, res) => {
-    try {
-        const result = await pool.query('SELECT * FROM products');
-        res.json(result.rows);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// 4. Add Product (Admin Only)
+// Admin Only: Add Product
 app.post('/api/products', authorize(['admin']), async (req, res) => {
     const { title, price, description } = req.body;
     try {
@@ -98,14 +112,22 @@ app.post('/api/products', authorize(['admin']), async (req, res) => {
     }
 });
 
-// const PORT = process.env.PORT || 5000;
-// app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Worker/Admin Only: View Delivery Assignments
+app.get('/api/worker/orders', authorize(['worker', 'admin']), async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM orders WHERE worker_id = $1 OR worker_id IS NULL', [req.user.id]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
+// 4. SERVER START & DB CONNECTION TEST
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, async () => {
     console.log(`Server running on port ${PORT}`);
     
-    // Test the database connection immediately on startup
+    // Immediate verification query to confirm DB link
     try {
         const res = await pool.query('SELECT NOW()');
         console.log('✅ DATABASE CONNECTED SUCCESSFULLY AT:', res.rows[0].now);
