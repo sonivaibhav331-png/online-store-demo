@@ -25,17 +25,26 @@ app.use(cors());
 //     connectionTimeoutMillis: 5000,
 // });
 
+// const pool = new Pool({
+//     user: 'YOUR_RENDER_DB_USER',       // e.g., 'flipkart_user_xxxx'
+//     password: 'YOUR_RENDER_DB_PASSWORD', // e.g., 'AbCdEfGhIjKlMnOpQrSt'
+//     host: 'YOUR_RENDER_DB_HOST',         // e.g., '://render.com'
+//     database: 'YOUR_RENDER_DB_NAME',     // e.g., 'flipkart_db_xxxx'
+//     port: 5432,
+//     ssl: { rejectUnauthorized: false }, 
+//     idleTimeoutMillis: 1000, 
+//     connectionTimeoutMillis: 5000,
+// });
 const pool = new Pool({
-    user: process.env.DB_USER,
-    password: String(process.env.DB_PASSWORD || ''), // Forces undefined or null to become an empty string
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    port: parseInt(process.env.DB_PORT || '5432'),
+    user: 'vicky',       // e.g., 'flipkart_user_xxxx'
+    password: 'A63kEbBwI1wLL4p8CV8UbqWFyN5xt3ND', // e.g., 'AbCdEfGhIjKlMnOpQrSt'
+    host: 'dpg-d778i7nafjfc73dbct0g-a',         // e.g., '://render.com'
+    database: 'postgresql://vicky:A63kEbBwI1wLL4p8CV8UbqWFyN5xt3ND@dpg-d778i7nafjfc73dbct0g-a/flipkart_szlo',     // e.g., 'flipkart_db_xxxx'
+    port: 5432,
     ssl: { rejectUnauthorized: false }, 
     idleTimeoutMillis: 1000, 
     connectionTimeoutMillis: 5000,
 });
-
 
 // Catch errors on the client pool so it doesn't crash your server
 pool.on('error', (err) => {
