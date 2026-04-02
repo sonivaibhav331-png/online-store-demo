@@ -99,4 +99,17 @@ app.post('/api/products', authorize(['admin']), async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, async () => {
+    console.log(`Server running on port ${PORT}`);
+    
+    // Test the database connection immediately on startup
+    try {
+        const res = await pool.query('SELECT NOW()');
+        console.log('✅ DATABASE CONNECTED SUCCESSFULLY AT:', res.rows[0].now);
+    } catch (err) {
+        console.error('❌ DATABASE CONNECTION ERROR:', err.message);
+    }
+});
