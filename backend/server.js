@@ -10,20 +10,32 @@ app.use(cors());
 
 // 1. DATABASE CONFIGURATION
 // This explicitly uses the separated environment variables to avoid credential parsing errors.
+// const pool = new Pool({
+//     user: process.env.DB_USER,
+//     password: process.env.DB_PASSWORD,
+//     host: process.env.DB_HOST,
+//     database: process.env.DB_NAME,
+//     port: process.env.DB_PORT || 5432,
+    
+//     // Forces SSL requirement since we are using the External hostname over public internet
+//     ssl: { rejectUnauthorized: false }, 
+    
+//     // Prevent ECONNRESET by killing stale idle connections quickly
+//     idleTimeoutMillis: 1000, 
+//     connectionTimeoutMillis: 5000,
+// });
+
 const pool = new Pool({
     user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
+    password: String(process.env.DB_PASSWORD || ''), // Forces undefined or null to become an empty string
     host: process.env.DB_HOST,
     database: process.env.DB_NAME,
-    port: process.env.DB_PORT || 5432,
-    
-    // Forces SSL requirement since we are using the External hostname over public internet
+    port: parseInt(process.env.DB_PORT || '5432'),
     ssl: { rejectUnauthorized: false }, 
-    
-    // Prevent ECONNRESET by killing stale idle connections quickly
     idleTimeoutMillis: 1000, 
     connectionTimeoutMillis: 5000,
 });
+
 
 // Catch errors on the client pool so it doesn't crash your server
 pool.on('error', (err) => {
