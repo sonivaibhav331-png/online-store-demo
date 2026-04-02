@@ -37,9 +37,9 @@ app.use(cors());
 // });
 const pool = new Pool({
     user: 'vicky',       // e.g., 'flipkart_user_xxxx'
-    password: 'A63kEbBwI1wLL4p8CV8UbqWFyN5xt3ND', // e.g., 'AbCdEfGhIjKlMnOpQrSt'
-    host: 'dpg-d778i7nafjfc73dbct0g-a',         // e.g., '://render.com'
-    database: 'postgresql://vicky:A63kEbBwI1wLL4p8CV8UbqWFyN5xt3ND@dpg-d778i7nafjfc73dbct0g-a/flipkart_szlo',     // e.g., 'flipkart_db_xxxx'
+    password: 'lNl1Xoa67OmutjOG0N46XJtksunWQGb5', // e.g., 'AbCdEfGhIjKlMnOpQrSt'
+    host: 'dpg-d77aa0h5pdvs73bl3rp0-a',         // e.g., '://render.com'
+    database: 'postgresql://vicky:lNl1Xoa67OmutjOG0N46XJtksunWQGb5@dpg-d77aa0h5pdvs73bl3rp0-a/flipkart_5g9z',     // e.g., 'flipkart_db_xxxx'
     port: 5432,
     ssl: { rejectUnauthorized: false }, 
     idleTimeoutMillis: 1000, 
